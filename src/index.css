@@ -1,0 +1,192 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 263 90% 51%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 65%;
+
+    --accent: 240 4% 16%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 240 5% 65%;
+
+    --sidebar-background: 240 10% 3.9%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 263 90% 51%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4% 16%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 4% 16%;
+    --sidebar-ring: 240 5% 65%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-gradient-to-br from-black via-slate-950 to-slate-900 text-foreground min-h-screen;
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  .healthcare-container {
+    @apply container mx-auto px-4 py-2;
+  }
+  
+  .healthcare-card {
+    @apply bg-black/30 backdrop-blur-md border border-white/10 rounded-lg shadow-xl p-6 transition-all duration-300 hover:shadow-2xl;
+  }
+  
+  .healthcare-button-primary {
+    @apply bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors shadow-lg hover:shadow-xl;
+  }
+  
+  .healthcare-button-secondary {
+    @apply bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-slate-950 text-white font-medium py-2 px-4 rounded-md transition-colors shadow-lg;
+  }
+  
+  .healthcare-input {
+    @apply w-full rounded-md border border-white/10 bg-black/40 backdrop-blur-sm px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/70 shadow-inner;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-br from-purple-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent;
+  }
+
+  .glass-card {
+    @apply bg-black/50 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] rounded-xl;
+  }
+  
+  .settings-glass-card {
+    @apply bg-black/60 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] rounded-xl transition-all duration-300 hover:shadow-[0_12px_48px_rgba(255,255,255,0.1)];
+  }
+  
+  .settings-btn {
+    @apply bg-gradient-to-r from-[#4a4e58] via-white to-[#716778] text-gray-200 transition-all duration-300 hover:text-black hover:bg-white hover:bg-none;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(147, 51, 234, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(147, 51, 234, 0.6);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.4s ease-out forwards;
+}
+
+.animate-glow {
+  animation: glow 4s infinite;
+}
+
+.luxury-gradient {
+  background: linear-gradient(135deg, #000000, #1a1a2e, #16213e);
+  background-size: 400% 400%;
+  animation: gradient 15s ease infinite;
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.staggered-animation > * {
+  opacity: 0;
+}
+
+.staggered-animation > *:nth-child(1) {
+  animation: fadeIn 0.5s ease-out 0.1s forwards;
+}
+
+.staggered-animation > *:nth-child(2) {
+  animation: fadeIn 0.5s ease-out 0.2s forwards;
+}
+
+.staggered-animation > *:nth-child(3) {
+  animation: fadeIn 0.5s ease-out 0.3s forwards;
+}
+
+.staggered-animation > *:nth-child(4) {
+  animation: fadeIn 0.5s ease-out 0.4s forwards;
+}
+
+.staggered-animation > *:nth-child(5) {
+  animation: fadeIn 0.5s ease-out 0.5s forwards;
+}
+
+.luxury-text-shadow {
+  text-shadow: 0 4px 12px rgba(147, 51, 234, 0.6);
+}
+
+.luxury-border {
+  border: 1px solid;
+  border-image: linear-gradient(to right, rgba(147, 51, 234, 0.5), rgba(79, 70, 229, 0.5)) 1;
+}
+
+.gold-accent {
+  @apply bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-500 bg-clip-text text-transparent;
+}
+
+.gold-border {
+  border: 1px solid;
+  border-image: linear-gradient(to right, rgba(251, 191, 36, 0.5), rgba(217, 119, 6, 0.5)) 1;
+}
