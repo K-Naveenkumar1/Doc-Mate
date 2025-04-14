@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from "react";
 import { Container } from "@/components/ui/container";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/UI/button";
 import { getSavedWorkouts } from "@/services/aiService";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/UI/tabs";
 import { Plus, Activity, Dumbbell } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import WorkoutPlanComponent, { WorkoutPlan } from "@/components/Workout/WorkoutPlan";
