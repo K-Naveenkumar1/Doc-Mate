@@ -16,4 +16,12 @@
     "noUnusedLocals": false,
     "strictNullChecks": false
   }
+,
+  "additionalCompilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "strict": true,
+    "lib": ["deno.ns", "dom"]
+  }
 }
+

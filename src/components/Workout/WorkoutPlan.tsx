@@ -1,8 +1,8 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/UI/badge";
+import { Button } from "@/components/UI/button";
 import { Clock, Calendar, Dumbbell, CheckCircle, AlertTriangle, Save, Share2 } from "lucide-react";
 
 export interface Exercise {

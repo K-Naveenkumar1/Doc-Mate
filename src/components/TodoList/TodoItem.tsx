@@ -1,8 +1,8 @@
 import React from "react";
 import { TodoItem as TodoItemType } from "@/components/TodoList/TodoList";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Checkbox } from "@/components/UI/checkbox";
 import { Calendar, Clock, Pill, User, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/UI/button";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 
