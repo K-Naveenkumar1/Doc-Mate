@@ -1,7 +1,22 @@
+import "xhr";
+import { serve } from "http/server";
+import { createClient } from '@supabase/supabase-js';
+import { authenticateUser, getAuthToken } from './auth.ts';
 
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+interface Medication {
+  name: string;
+  dosage: string;
+  frequency: string;
+  duration: string;
+}
+
+interface AnalysisResult {
+  medicationList: Medication[];
+  condition: string;
+  summary: string;
+  recommendations: string[];
+  needsWorkout: boolean;
+}
 
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -20,7 +35,24 @@ serve(async (req) => {
   }
 
   try {
-    const { image, userId } = await req.json();
+    // Authenticate user
+    const token = getAuthToken(req);
+    if (!token) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { user, error: authError } = await authenticateUser(token);
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { image } = await req.json();
     
     if (!image) {
       return new Response(
@@ -30,53 +62,58 @@ serve(async (req) => {
     }
 
     // Initialize Supabase client
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
     
     // Process image with Gemini API
     const analysisResult = await analyzePrescriptionWithGemini(image);
     
-    // Save the result to Supabase if userId is provided
-    let prescriptionId = null;
-    if (userId && analysisResult) {
-      // Save the prescription details
-      const { data: prescriptionData, error: prescriptionError } = await supabase
-        .from('prescriptions')
-        .insert({
-          user_id: userId,
-          medication_name: analysisResult.medicationList[0]?.name || 'Unknown',
-          dosage: analysisResult.medicationList[0]?.dosage || 'Unknown',
-          frequency: analysisResult.medicationList[0]?.frequency || 'Unknown',
-          duration: analysisResult.medicationList[0]?.duration || 'Unknown',
-          condition: analysisResult.condition,
-          summary: analysisResult.summary,
-          recommendations: analysisResult.recommendations,
-        })
-        .select()
-        .single();
+    // Save the result to Supabase
+    const { data: prescriptionData, error: prescriptionError } = await supabase
+      .from('prescriptions')
+      .insert({
+        user_id: user.id,
+        medication_name: analysisResult.medicationList[0]?.name || 'Unknown',
+        dosage: analysisResult.medicationList[0]?.dosage || 'Unknown',
+        frequency: analysisResult.medicationList[0]?.frequency || 'Unknown',
+        duration: analysisResult.medicationList[0]?.duration || 'Unknown',
+        condition: analysisResult.condition,
+        summary: analysisResult.summary,
+        recommendations: analysisResult.recommendations,
+      })
+      .select()
+      .single();
 
-      if (prescriptionError) {
-        console.error('Error saving prescription:', prescriptionError);
-      } else {
-        prescriptionId = prescriptionData.id;
-        
-        // Save the full analysis data
-        const { error: analysisError } = await supabase
-          .from('prescription_analyses')
-          .insert({
-            prescription_id: prescriptionId,
-            analysis_data: analysisResult,
-          });
+    if (prescriptionError) {
+      console.error('Error saving prescription:', prescriptionError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to save prescription' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-        if (analysisError) {
-          console.error('Error saving analysis:', analysisError);
-        }
-      }
+    // Save the full analysis data
+    const { error: analysisError } = await supabase
+      .from('prescription_analyses')
+      .insert({
+        prescription_id: prescriptionData.id,
+        analysis_data: analysisResult,
+      });
+
+    if (analysisError) {
+      console.error('Error saving analysis:', analysisError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to save analysis' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     return new Response(
       JSON.stringify({ 
         analysis: analysisResult, 
-        prescriptionId 
+        prescriptionId: prescriptionData.id 
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -85,7 +122,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in analyze-prescription function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error occurred' }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -94,7 +131,7 @@ serve(async (req) => {
   }
 });
 
-async function analyzePrescriptionWithGemini(imageBase64: string) {
+async function analyzePrescriptionWithGemini(imageBase64: string): Promise<AnalysisResult> {
   try {
     // Extract the base64 data from the data URL if necessary
     const base64Data = imageBase64.includes(',') 
@@ -133,14 +170,16 @@ async function analyzePrescriptionWithGemini(imageBase64: string) {
       body: JSON.stringify(payload)
     });
     
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.statusText}`);
+    }
+
     const data = await response.json();
     
     // Process Gemini response to structured format
     if (data.candidates && data.candidates.length > 0) {
       const textContent = data.candidates[0].content.parts[0].text;
       
-      // Parse the text content into structured data
-      // This is a simplified example of parsing logic
       const medications = extractMedications(textContent);
       const condition = extractCondition(textContent);
       const recommendations = extractRecommendations(textContent);
@@ -161,10 +200,8 @@ async function analyzePrescriptionWithGemini(imageBase64: string) {
   }
 }
 
-// Helper functions to extract information from the AI response
-function extractMedications(text: string) {
-  // Simplified medication extraction - in a real app, this would be more sophisticated
-  const medications = [];
+function extractMedications(text: string): Medication[] {
+  const medications: Medication[] = [];
   
   // Look for medication patterns
   const medRegex = /medication:\s*([^,\n]+).*?dosage:\s*([^,\n]+).*?frequency:\s*([^,\n]+).*?duration:\s*([^,\n]+)/gi;
@@ -207,7 +244,7 @@ function extractMedications(text: string) {
   return medications;
 }
 
-function extractCondition(text: string) {
+function extractCondition(text: string): string {
   // Look for condition mentions
   const conditionMatches = text.match(/(?:condition|diagnosis|treating|for|indicated for):\s*([^,\n.]+)/i);
   return conditionMatches && conditionMatches[1] 
@@ -215,9 +252,8 @@ function extractCondition(text: string) {
     : "Not specified";
 }
 
-function extractRecommendations(text: string) {
-  // Extract recommendations
-  const recommendations = [];
+function extractRecommendations(text: string): string[] {
+  const recommendations: string[] = [];
   
   // Look for recommendation sections
   const recSection = text.match(/recommendation[s]?:?(.*?)(?:\n\n|$)/is);
@@ -261,7 +297,7 @@ function extractRecommendations(text: string) {
   return recommendations;
 }
 
-function summarizeAnalysis(text: string) {
+function summarizeAnalysis(text: string): string {
   // Try to find a summary section
   const summarySection = text.match(/summary:?(.*?)(?:\n\n|$)/is);
   
@@ -278,7 +314,7 @@ function summarizeAnalysis(text: string) {
   return "Analysis completed. Please review the extracted medication details and recommendations.";
 }
 
-function determineWorkoutNeed(condition: string, text: string) {
+function determineWorkoutNeed(condition: string, text: string): boolean {
   // Determine if patient should avoid workouts based on condition or text content
   const avoidWorkoutConditions = [
     "fracture", "broken", "respiratory", "infection", "surgery", "acute", "injury",
